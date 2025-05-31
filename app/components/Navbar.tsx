@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X, Phone, Mail, MapPin, User, Search } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -52,9 +53,12 @@ export default function Navbar() {
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-xl">H</span>
-              </div>
+                <Link
+                  href="/"
+                  className="inline-flex items-center justify-center w-10 h-10 mr-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  <span className="text-white font-bold text-xl">H</span>
+                </Link>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Hotel MBD
@@ -83,9 +87,12 @@ export default function Navbar() {
               <button className="text-gray-600 hover:text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-all">
                 <User size={20} />
               </button>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                Book Now
-              </button>
+                <Link
+                  href="/booking"
+                  className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  Book Now
+                </Link>
             </div>
 
             <button
@@ -121,9 +128,12 @@ export default function Navbar() {
                     <User size={20} />
                   </button>
                 </div>
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-semibold">
-                  Book Now
-                </button>
+                    <Link
+                      href="/booking"
+                      className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-semibold"
+                    >
+                      Book Now
+                    </Link>
               </div>
             </div>
           </div>
