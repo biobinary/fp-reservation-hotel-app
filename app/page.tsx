@@ -1,6 +1,7 @@
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
+import Footer from './components/Footer';
 
 export default function HomePage() {
   return (
@@ -9,6 +10,7 @@ export default function HomePage() {
       <main className="flex-grow">
         <Hero />
         <Features />
+        <Footer />
       </main>
     </div>
   );

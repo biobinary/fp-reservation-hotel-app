@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hotel XYZ - Reservasi Kamar Online",
-  description: "Pesan kamar hotel impian Anda dengan mudah dan cepat di Hotel XYZ.",
+  title: "Hotel MBD - Reservasi Kamar Online",
+  description: "Pesan kamar hotel impian Anda dengan mudah dan cepat di Hotel MBD.",
 };
 
 export default function RootLayout({
