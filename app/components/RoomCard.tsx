@@ -2,214 +2,204 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-
-interface Room {
-  id: string;
-  name: string;
-  images: string[];
-  size: number;
-  maxGuests: number;
-  beds: number;
-  description: string;
-  originalPrice?: number;
-  discountedPrice: number;
-  specialOffer?: boolean;
-}
+import { useState, useEffect } from 'react';
+import type { KamarData } from '../booking/page'; // Asumsi path ini benar
 
 interface RoomCardProps {
-  room: Room;
+  kamar: KamarData & { images: string[] };
 }
 
-export default function RoomCard({ room }: RoomCardProps) {
+export default function RoomCardMinimalist({ kamar }: RoomCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  
+  const isAvailable = kamar.k_jumlah_kamar > 0;
+  const facilities = typeof kamar.k_fasilitas === 'string' 
+    ? kamar.k_fasilitas.split(',').map(f => f.trim()).filter(f => f.length > 0)
+    : [];
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % room.images.length);
+  const images = kamar.images && kamar.images.length > 0 ? kamar.images : ['/placeholder.jpg'];
+  const hasMultipleImages = images.length > 1;
+
+  useEffect(() => {
+    
+    if (!isAutoPlaying || !hasMultipleImages) return;
+    
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, hasMultipleImages, images.length]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
+    );
   };
 
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + room.images.length) % room.images.length);
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+    );
   };
 
-  const discountPercentage = room.originalPrice ? 
-    Math.round(((room.originalPrice - room.discountedPrice) / room.originalPrice) * 100) : 0;
+  const goToImage = (index: number) => {
+    setCurrentImageIndex(index);
+  };
+
+  const getFacilityIcon = (facility: string) => {
+    const lowerFacility = facility.toLowerCase();
+    if (lowerFacility.includes('wifi')) return '📶';
+    if (lowerFacility.includes('tv')) return '📺';
+    if (lowerFacility.includes('ac')) return '❄️';
+    if (lowerFacility.includes('shower')) return '🚿';
+    if (lowerFacility.includes('coffee')) return '☕';
+    return '✨';
+  };
 
   return (
-    <div 
-      className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 mb-8 border border-gray-100 dark:border-gray-700"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className="group flex flex-col md:flex-row bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 mb-8">
       
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none" />
-      
-      <div className="flex flex-col lg:flex-row">
-        <div className="relative w-full lg:w-2/5 h-80 lg:h-96 overflow-hidden">
-          <div className="relative w-full h-full">
-            <Image
-              src={room.images[currentImageIndex]}
-              alt={room.name}
-              fill
-              className={`object-cover transition-all duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
-            />
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-            
-            {room.images.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 z-20"
-                  aria-label="Previous image"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full hover:bg-white hover:scale-110 transition-all duration-300 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 z-20"
-                  aria-label="Next image"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                
-                <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm text-white text-sm px-3 py-1 rounded-full">
-                  {currentImageIndex + 1} / {room.images.length}
-                </div>
-                
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                  {room.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setCurrentImageIndex(index);
-                      }}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        index === currentImageIndex 
-                          ? 'bg-white scale-125' 
-                          : 'bg-white/60 hover:bg-white/80'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-            
-            {room.specialOffer && (
-              <div className="absolute top-0 left-0">
-                <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold px-4 py-2 rounded-br-2xl shadow-lg">
-                  <div className="flex items-center space-x-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-                    </svg>
-                    <span>Special Offer</span>
-                  </div>
-                </div>
+      {/* Image Slider Section */}
+      <div 
+        className="relative w-full md:w-1/3 h-64 md:h-auto overflow-hidden"
+        onMouseEnter={() => setIsAutoPlaying(false)}
+        onMouseLeave={() => setIsAutoPlaying(true)}
+      >
+        {/* Main Image */}
+        <div className="relative w-full h-full">
+          <Image
+            src={images[currentImageIndex]}
+            alt={`${kamar.k_tipe_kamar} - Gambar ${currentImageIndex + 1}`}
+            fill
+            className="object-cover transition-all duration-700 ease-in-out"
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          
+          {/* Room Info Overlay */}
+          <div className="absolute bottom-4 left-4 text-white z-10">
+            <h3 className="text-2xl font-bold">{kamar.k_tipe_kamar}</h3>
+            <p className="text-sm">Mulai dari Rp {kamar.k_harga_per_malam.toLocaleString('id-ID')}</p>
+          </div>
+          
+          {/* Limited Rooms Badge */}
+          {kamar.k_jumlah_kamar > 0 && kamar.k_jumlah_kamar <= 3 && (
+            <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
+              Sisa {kamar.k_jumlah_kamar}!
+            </div>
+          )}
+
+          {/* Navigation Arrows - Only show if multiple images */}
+          {hasMultipleImages && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                aria-label="Gambar sebelumnya"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                aria-label="Gambar berikutnya"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* Image Counter */}
+          {hasMultipleImages && (
+            <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full z-10">
+              {currentImageIndex + 1} / {images.length}
+            </div>
+          )}
+        </div>
+
+        {/* Dots Indicator - Only show if multiple images */}
+        {hasMultipleImages && (
+          <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToImage(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex 
+                    ? 'bg-white scale-125' 
+                    : 'bg-white/50 hover:bg-white/75'
+                }`}
+                aria-label={`Ke gambar ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Content Section */}
+      <div className="w-full md:w-2/3 p-6 flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Deskripsi Singkat</h4>
+            {hasMultipleImages && (
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{images.length} Foto</span>
               </div>
             )}
-            
-            {discountPercentage > 0 && (
-              <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
-                -{discountPercentage}%
+          </div>
+          
+          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-6">
+            {kamar.k_deskripsi.substring(0, 150)}{kamar.k_deskripsi.length > 150 ? '...' : ''}
+          </p>
+
+          <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">Fasilitas Termasuk</h4>
+          <div className="flex flex-wrap gap-4 mb-6">
+            {facilities.slice(0, 5).map((facility, index) => (
+              <div key={index} className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-200">
+                <span className="text-xl">{getFacilityIcon(facility)}</span>
+                <span>{facility}</span>
+              </div>
+            ))}
+            {facilities.length > 5 && (
+              <div className="flex items-center text-sm text-blue-500">
+                + {facilities.length - 5} lainnya
               </div>
             )}
           </div>
         </div>
-
-        <div className="flex-1 p-8 lg:p-10 flex flex-col justify-between relative z-20">
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
-                {room.name}
-              </h3>
-              
-              <div className="flex flex-wrap gap-6 text-gray-600 dark:text-gray-300">
-                <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full">
-                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2" />
-                  </svg>
-                  <span className="font-medium">{room.size} m²</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span className="font-medium">{room.maxGuests} Guests</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full">
-                  <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                  </svg>
-                  <span className="font-medium">{room.beds} Bed{room.beds > 1 ? 's' : ''}</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
-              {room.description}
+        
+        {/* Action Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex flex-col items-start mb-4 sm:mb-0">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Harga per malam</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              Rp {kamar.k_harga_per_malam.toLocaleString('id-ID')}
             </p>
-
-            <button className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold group/btn">
-              <span>See more details</span>
-              <svg className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
-
-          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-600">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div className="lg:order-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Starting from</p>
-                <div className="flex items-baseline space-x-3">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                    Rp {room.discountedPrice.toLocaleString('id-ID')}
-                  </span>
-                  {room.originalPrice && (
-                    <span className="text-xl text-gray-500 dark:text-gray-400 line-through">
-                      Rp {room.originalPrice.toLocaleString('id-ID')}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-4 mt-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    Save {discountPercentage}% Today
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  Taxes included • Per night
-                </p>
-              </div>
-
-              <Link
-                href={`/booking?roomId=${room.id}`}
-                className="lg:order-1 group/book relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover/book:opacity-100 transition-opacity duration-300" />
-                <span className="relative flex items-center space-x-2">
-                  <span>Details & Book</span>
-                  <svg className="w-5 h-5 transform group-hover/book:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-                
-                <div className="absolute inset-0 opacity-0 group-hover/book:opacity-100">
-                  <div className="absolute inset-0 bg-white/20 rounded-2xl animate-ping" />
-                </div>
-              </Link>
-            </div>
-          </div>
+          <Link
+            href={isAvailable ? `/booking?roomId=${kamar.k_id_kamar}` : '#'}
+            className={`w-full sm:w-auto px-6 py-3 text-center font-semibold text-white rounded-lg transition-all duration-300 ${
+              isAvailable 
+                ? 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-300/50' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
+            style={!isAvailable ? { pointerEvents: 'none' } : {}}
+          >
+            {isAvailable ? 'Pesan Kamar' : 'Habis Terjual'}
+          </Link>
         </div>
       </div>
     </div>
