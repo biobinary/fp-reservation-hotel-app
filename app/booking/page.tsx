@@ -1,11 +1,11 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RoomCard from '../components/RoomCard';
 
-import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
-
-export interface KamarData extends RowDataPacket {
+export interface KamarData {
   k_id_kamar: string;
   k_id_hotel: string;
   k_tipe_kamar: string;
@@ -14,31 +14,92 @@ export interface KamarData extends RowDataPacket {
   k_jumlah_kamar: number;
   k_deskripsi: string;
   k_gambar_kamar: string;
+  images?: string[];
+  popularityScore?: number; // Calculated from reservations
 }
 
-async function getRooms(): Promise<KamarData[]> {
- 
-  try {
+interface FilterState {
+  tipeKamar: string;
+  sortBy: string;
+  minPrice: number;
+  maxPrice: number;
+  priceRange: [number, number];
+}
 
-    const query = 'SELECT * FROM kamar ORDER BY k_harga_per_malam ASC';
-    const [rows] = await pool.query<KamarData[]>(query);
+export default function RoomsPage() {
+  const [roomsData, setRoomsData] = useState<KamarData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  
+  const [filters, setFilters] = useState<FilterState>({
+    tipeKamar: '',
+    sortBy: 'price_asc',
+    minPrice: 0,
+    maxPrice: 2000000,
+    priceRange: [200000, 2000000]
+  });
 
-    return rows.map(kamar => ({
-      ...kamar,
-      images: JSON.parse(kamar.k_gambar_kamar || '[]') 
+  // Fetch rooms data with filters
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const searchParams = new URLSearchParams({
+        tipeKamar: filters.tipeKamar,
+        sortBy: filters.sortBy,
+        minPrice: filters.priceRange[0].toString(),
+        maxPrice: filters.priceRange[1].toString()
+      });
+
+      const response = await fetch(`/api/rooms?${searchParams}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setRoomsData(data.rooms);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms:', error);
+      setRoomsData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, [filters]);
+
+  // Get unique room types for filter dropdown
+  const roomTypes = useMemo(() => {
+    const types = [...new Set(roomsData.map(room => room.k_tipe_kamar))];
+    return types.sort();
+  }, [roomsData]);
+
+  // Handle filter changes
+  const handleFilterChange = (key: keyof FilterState, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
     }));
+  };
 
-  } catch (error) {
-    console.error('Failed to fetch rooms:', error);
-    return [];
-  
-  }
+  // Handle price range change
+  const handlePriceRangeChange = (min: number, max: number) => {
+    setFilters(prev => ({
+      ...prev,
+      priceRange: [min, max]
+    }));
+  };
 
-}
-
-export default async function RoomsPage() {
-  
-  const roomsData = await getRooms();
+  // Reset filters
+  const resetFilters = () => {
+    setFilters({
+      tipeKamar: '',
+      sortBy: 'price_asc',
+      minPrice: 0,
+      maxPrice: 2000000,
+      priceRange: [200000, 2000000]
+    });
+  };
 
   return (
     <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
@@ -123,58 +184,137 @@ export default async function RoomsPage() {
       <main className="flex-grow py-12">
         <div className="container mx-auto px-4">
           
-          {/* Filter and Sort Section */}
+          {/* Enhanced Filter and Sort Section */}
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 mb-8 border border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col gap-6">
               
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">🏷️</span>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Filter & Urutkan</h3>
-                <p className="text-gray-600 dark:text-gray-400">Temukan kamar yang tepat untuk Anda</p>
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl">🏷️</span>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Filter & Urutkan</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Temukan kamar yang tepat untuk Anda</p>
+                </div>
+                
+                <button 
+                  onClick={resetFilters}
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium text-sm flex items-center space-x-1 px-3 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-200"
+                >
+                  <span>🔄</span>
+                  <span>Reset Filter</span>
+                </button>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Filter Dropdown */}
-                <div className="relative">
-                  <select className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 min-w-[160px]">
-                    <option value="">Semua Tipe</option>
-                    <option value="standard">Standard</option>
-                    <option value="deluxe">Deluxe</option>
-                    <option value="suite">Suite</option>
-                    <option value="premium">Premium</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+              {/* Filter Controls */}
+              <div className="flex flex-col lg:flex-row gap-4">
+                
+                {/* Room Type Filter */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tipe Kamar
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={filters.tipeKamar}
+                      onChange={(e) => handleFilterChange('tipeKamar', e.target.value)}
+                      className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-full"
+                    >
+                      <option value="">Semua Tipe</option>
+                      {roomTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Sort Dropdown */}
-                <div className="relative">
-                  <select className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 min-w-[180px]">
-                    <option value="price_asc">Harga: Rendah ke Tinggi</option>
-                    <option value="price_desc">Harga: Tinggi ke Rendah</option>
-                    <option value="rating_desc">Rating Tertinggi</option>
-                    <option value="popular">Paling Popular</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                {/* Sort Options */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Urutkan Berdasarkan
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={filters.sortBy}
+                      onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                      className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-full"
+                    >
+                      <option value="price_asc">Harga: Rendah ke Tinggi</option>
+                      <option value="price_desc">Harga: Tinggi ke Rendah</option>
+                      <option value="popular_desc">Paling Populer</option>
+                      <option value="rooms_desc">Ketersediaan Terbanyak</option>
+                      <option value="type_asc">Tipe Kamar A-Z</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Price Range Filter */}
-                <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                    💰 Rp 200K - 2M
-                  </span>
-                  <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium text-sm">
-                    Ubah
-                  </button>
+                {/* Price Range */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Rentang Harga (per malam)
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      value={filters.priceRange[0]}
+                      onChange={(e) => handlePriceRangeChange(parseInt(e.target.value) || 0, filters.priceRange[1])}
+                      placeholder="Min"
+                      className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-500">-</span>
+                    <input
+                      type="number"
+                      value={filters.priceRange[1]}
+                      onChange={(e) => handlePriceRangeChange(filters.priceRange[0], parseInt(e.target.value) || 2000000)}
+                      placeholder="Max"
+                      className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Rp {filters.priceRange[0].toLocaleString('id-ID')} - Rp {filters.priceRange[1].toLocaleString('id-ID')}
+                  </div>
                 </div>
               </div>
+              
+              {/* Active Filters Display */}
+              {(filters.tipeKamar || filters.priceRange[0] > 200000 || filters.priceRange[1] < 2000000) && (
+                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter Aktif:</span>
+                  
+                  {filters.tipeKamar && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      Tipe: {filters.tipeKamar}
+                      <button 
+                        onClick={() => handleFilterChange('tipeKamar', '')}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  
+                  {(filters.priceRange[0] > 200000 || filters.priceRange[1] < 2000000) && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                      Harga: Rp {filters.priceRange[0].toLocaleString('id-ID')} - Rp {filters.priceRange[1].toLocaleString('id-ID')}
+                      <button 
+                        onClick={() => handlePriceRangeChange(200000, 2000000)}
+                        className="ml-2 text-green-600 hover:text-green-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -186,78 +326,76 @@ export default async function RoomsPage() {
               </h2>
               <p className="text-gray-600 dark:text-gray-400 flex items-center space-x-2">
                 <span>📍</span>
-                <span>Menampilkan {roomsData.length} kamar untuk tanggal pilihan Anda</span>
+                <span>
+                  {loading ? 'Memuat...' : `Menampilkan ${roomsData.length} kamar untuk kriteria pencarian Anda`}
+                </span>
               </p>
             </div>
             
             {/* View Toggle */}
             <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
-              <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg transition-colors duration-200">
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  viewMode === 'list' 
+                    ? 'text-white bg-blue-600' 
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
                 📋 List
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors duration-200">
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  viewMode === 'grid' 
+                    ? 'text-white bg-blue-600' 
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
                 🔲 Grid
               </button>
             </div>
           </div>
 
-          {/* Rooms List */}
-          <div className="space-y-8">
-            {roomsData.length > 0 ? (
-              roomsData.map((kamar) => (
-                // @ts-ignore - 'images' ditambahkan secara dinamis, jadi kita abaikan error TS di sini
-                <RoomCard key={kamar.k_id_kamar} kamar={kamar} />
-              ))
-            ) : (
-              <div className="text-center py-16">
-                <div className="max-w-md mx-auto">
-                  <div className="text-6xl mb-6">😔</div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Tidak Ada Kamar Tersedia
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8">
-                    Maaf, tidak ada kamar yang tersedia untuk kriteria pencarian Anda. 
-                    Coba ubah tanggal atau filter pencarian.
-                  </p>
-                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                    🔄 Ubah Pencarian
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Newsletter Subscription */}
-          <div className="mt-16 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-3xl p-8 text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/20" />
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-300/20 rounded-full blur-2xl" />
-            
-            <div className="relative z-10 text-center">
-              <h3 className="text-3xl font-bold mb-4 flex items-center justify-center space-x-2">
-                <span>📧</span>
-                <span>Dapatkan Penawaran Terbaik</span>
-              </h3>
-              <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-                Berlangganan newsletter kami dan dapatkan notifikasi untuk promo eksklusif dan penawaran terbatas!
-              </p>
-              
-              <div className="max-w-md mx-auto flex gap-3">
-                <input
-                  type="email"
-                  placeholder="Masukkan email Anda..."
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 border border-white/20"
-                />
-                <button className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors duration-300 shadow-lg">
-                  Subscribe
-                </button>
-              </div>
-              
-              <p className="text-sm text-blue-200 mt-4">
-                ✅ Gratis dan bisa berhenti kapan saja
-              </p>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Memuat kamar...</span>
             </div>
-          </div>
+          )}
+
+          {/* Rooms List/Grid */}
+          {!loading && (
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-8'}>
+              {roomsData.length > 0 ? (
+                roomsData.map((kamar) => (
+                  // @ts-ignore - 'images' ditambahkan secara dinamis, jadi kita abaikan error TS di sini
+                  <RoomCard key={kamar.k_id_kamar} kamar={kamar} viewMode={viewMode} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-16">
+                  <div className="max-w-md mx-auto">
+                    <div className="text-6xl mb-6">😔</div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      Tidak Ada Kamar Tersedia
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-8">
+                      Maaf, tidak ada kamar yang sesuai dengan kriteria pencarian Anda. 
+                      Coba ubah filter atau rentang harga.
+                    </p>
+                    <button 
+                      onClick={resetFilters}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    >
+                      🔄 Reset Filter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </main>
 
