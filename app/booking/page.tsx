@@ -5,6 +5,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RoomCard from '../components/RoomCard';
 
+
+
 export interface KamarData {
   k_id_kamar: string;
   k_id_hotel: string;
@@ -24,19 +26,29 @@ interface FilterState {
   minPrice: number;
   maxPrice: number;
   priceRange: [number, number];
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
 }
+
 
 export default function RoomsPage() {
   const [roomsData, setRoomsData] = useState<KamarData[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   
+  
   const [filters, setFilters] = useState<FilterState>({
     tipeKamar: '',
     sortBy: 'price_asc',
     minPrice: 0,
     maxPrice: 2000000,
-    priceRange: [200000, 2000000]
+    priceRange: [200000, 2000000],
+    checkIn: '2025-05-31',
+    checkOut: '2025-06-01',
+    guests: 2,
+    rooms: 1
   });
 
   // Fetch rooms data with filters
@@ -44,11 +56,16 @@ export default function RoomsPage() {
     setLoading(true);
     try {
       const searchParams = new URLSearchParams({
-        tipeKamar: filters.tipeKamar,
-        sortBy: filters.sortBy,
-        minPrice: filters.priceRange[0].toString(),
-        maxPrice: filters.priceRange[1].toString()
-      });
+      tipeKamar: filters.tipeKamar,
+      sortBy: filters.sortBy,
+      minPrice: filters.priceRange[0].toString(),
+      maxPrice: filters.priceRange[1].toString(),
+      checkIn: filters.checkIn,
+      checkOut: filters.checkOut,
+      guests: filters.guests.toString(),
+      rooms: filters.rooms.toString()
+    });
+
 
       const response = await fetch(`/api/rooms?${searchParams}`);
       const data = await response.json();
@@ -90,16 +107,25 @@ export default function RoomsPage() {
     }));
   };
 
+  const [showSearchForm, setShowSearchForm] = useState(false);
+
+  
   // Reset filters
   const resetFilters = () => {
     setFilters({
-      tipeKamar: '',
-      sortBy: 'price_asc',
-      minPrice: 0,
-      maxPrice: 2000000,
-      priceRange: [200000, 2000000]
-    });
+    tipeKamar: '',
+    sortBy: 'price_asc',
+    minPrice: 0,
+    maxPrice: 2000000,
+    priceRange: [200000, 2000000],
+    checkIn: '2025-05-31',
+    checkOut: '2025-06-01',
+    guests: 2,
+    rooms: 1
+  });
   };
+  
+
 
   return (
     <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
@@ -139,43 +165,134 @@ export default function RoomsPage() {
               
               {/* Search Details */}
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
+
+                {/* Check-in */}
                 <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-3 rounded-2xl border border-blue-200 dark:border-blue-700">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <span className="text-xl">📅</span>
-                    <div>
-                      <p className="font-semibold text-blue-800 dark:text-blue-200">Check-in</p>
-                      <p className="text-blue-600 dark:text-blue-300">31 Mei 2025</p>
-                    </div>
-                  </div>
+                  <label className="block text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
+                    📅 Check-in
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.checkIn}
+                    onChange={(e) => handleFilterChange('checkIn', e.target.value)}
+                    className="bg-transparent outline-none text-blue-600 dark:text-blue-300 text-sm"
+                  />
                 </div>
-                
+
+                {/* Check-out */}
                 <div className="bg-purple-50 dark:bg-purple-900/20 px-4 py-3 rounded-2xl border border-purple-200 dark:border-purple-700">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <span className="text-xl">📅</span>
-                    <div>
-                      <p className="font-semibold text-purple-800 dark:text-purple-200">Check-out</p>
-                      <p className="text-purple-600 dark:text-purple-300">1 Juni 2025</p>
-                    </div>
-                  </div>
+                  <label className="block text-sm font-semibold text-purple-800 dark:text-purple-200 mb-1">
+                    📅 Check-out
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.checkOut}
+                    onChange={(e) => handleFilterChange('checkOut', e.target.value)}
+                    className="bg-transparent outline-none text-purple-600 dark:text-purple-300 text-sm"
+                  />
                 </div>
-                
+
+                {/* Tamu */}
                 <div className="bg-green-50 dark:bg-green-900/20 px-4 py-3 rounded-2xl border border-green-200 dark:border-green-700">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <span className="text-xl">👥</span>
-                    <div>
-                      <p className="font-semibold text-green-800 dark:text-green-200">Tamu</p>
-                      <p className="text-green-600 dark:text-green-300">2 Dewasa • 1 Kamar</p>
-                    </div>
-                  </div>
+                  <label className="block text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+                    👥 Tamu
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={filters.guests}
+                    onChange={(e) => handleFilterChange('guests', parseInt(e.target.value))}
+                    className="bg-transparent outline-none text-green-600 dark:text-green-300 text-sm w-16"
+                  />
                 </div>
+
+                {/* Kamar */}
+                <div className="bg-green-50 dark:bg-green-900/20 px-4 py-3 rounded-2xl border border-green-200 dark:border-green-700">
+                  <label className="block text-sm font-semibold text-green-800 dark:text-green-200 mb-1">
+                    🛏️ Kamar
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={filters.rooms}
+                    onChange={(e) => handleFilterChange('rooms', parseInt(e.target.value))}
+                    className="bg-transparent outline-none text-green-600 dark:text-green-300 text-sm w-16"
+                  />
+                </div>
+
               </div>
-              
+
               {/* Change Search Button */}
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2">
+              <button
+                onClick={() => setShowSearchForm(prev => !prev)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+              >
                 <span>🔄</span>
                 <span>Ubah Pencarian</span>
               </button>
             </div>
+            {showSearchForm && (
+            <div className="mt-6 bg-gray-900/60 backdrop-blur-md dark:bg-gray-800/80 p-6 rounded-2xl shadow-xl mx-auto max-w-6xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                {/* Check-in */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">📅 Check-in</label>
+                  <input
+                    type="date"
+                    value={filters.checkIn}
+                    onChange={(e) => handleFilterChange('checkIn', e.target.value)}
+                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Check-out */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">📅 Check-out</label>
+                  <input
+                    type="date"
+                    value={filters.checkOut}
+                    onChange={(e) => handleFilterChange('checkOut', e.target.value)}
+                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                {/* Tamu */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">👥 Tamu</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={filters.guests}
+                    onChange={(e) => handleFilterChange('guests', parseInt(e.target.value))}
+                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Kamar */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">🛏️ Kamar</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={filters.rooms}
+                    onChange={(e) => handleFilterChange('rooms', parseInt(e.target.value))}
+                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Tombol Terapkan */}
+              <div className="text-right mt-6">
+                <button
+                  onClick={() => setShowSearchForm(false)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold px-6 py-2 rounded-xl shadow hover:scale-105 transition"
+                >
+                  ✅ Terapkan
+                </button>
+              </div>
+            </div>
+          )}
           </div>
         </div>
       </div>

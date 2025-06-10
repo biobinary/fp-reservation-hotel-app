@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { KamarData } from '../booking/page';
 
+
 interface RoomCardProps {
   kamar: KamarData & {
     hotel_nama?: string;

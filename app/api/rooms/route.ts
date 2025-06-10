@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'price_asc';
     const minPrice = parseInt(searchParams.get('minPrice') || '0');
     const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
+    const checkIn = searchParams.get('checkIn') || '';
+    const checkOut = searchParams.get('checkOut') || '';
+    const guests = parseInt(searchParams.get('guests') || '1');
+    const rooms = parseInt(searchParams.get('rooms') || '1');
+
     
     let query = `
       SELECT 
