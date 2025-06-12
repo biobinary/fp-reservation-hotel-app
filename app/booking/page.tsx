@@ -4,10 +4,9 @@ import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RoomCard from '../components/RoomCard';
+import { RowDataPacket } from 'mysql2';
 
-
-
-export interface KamarData {
+export interface KamarData extends RowDataPacket {
   k_id_kamar: string;
   k_id_hotel: string;
   k_tipe_kamar: string;
@@ -17,7 +16,11 @@ export interface KamarData {
   k_deskripsi: string;
   k_gambar_kamar: string;
   images?: string[];
-  popularityScore?: number; // Calculated from reservations
+  hotel_nama?: string;
+  hotel_alamat?: string;
+  popularityScore?: number;
+  totalReservations?: number;
+  confirmedReservations?: number;
 }
 
 interface FilterState {
@@ -488,7 +491,10 @@ export default function RoomsPage() {
               {roomsData.length > 0 ? (
                 roomsData.map((kamar) => (
                   // @ts-ignore - 'images' ditambahkan secara dinamis, jadi kita abaikan error TS di sini
-                  <RoomCard key={kamar.k_id_kamar} kamar={kamar} viewMode={viewMode} />
+                  <RoomCard 
+                    key={kamar.k_id_kamar} kamar={kamar} viewMode={viewMode} 
+                    checkIn={filters.checkIn} checkOut={filters.checkOut} guests={filters.guests}
+                  />
                 ))
               ) : (
                 <div className="col-span-full text-center py-16">

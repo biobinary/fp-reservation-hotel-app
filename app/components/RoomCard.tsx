@@ -3,20 +3,20 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { KamarData } from '../booking/page';
+import Link from 'next/link';
 
 interface RoomCardProps {
   kamar: KamarData & {
-    hotel_nama?: string;
-    hotel_alamat?: string;
     availableRooms?: number;
-    totalReservations?: number;
-    confirmedReservations?: number;
     formattedPrice?: string;
   };
   viewMode?: 'list' | 'grid';
+  checkIn: string;
+  checkOut: string;
+  guests: number;
 }
 
-export default function RoomCard({ kamar, viewMode = 'list' }: RoomCardProps) {
+export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut, guests }: RoomCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
   
@@ -169,10 +169,12 @@ export default function RoomCard({ kamar, viewMode = 'list' }: RoomCardProps) {
             )}
           </div>
 
-          {/* Book Button */}
-          <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+          <Link 
+            href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
+            className="block text-center w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
             Pesan Sekarang
-          </button>
+          </Link>
+
         </div>
       </div>
     );
@@ -328,10 +330,13 @@ export default function RoomCard({ kamar, viewMode = 'list' }: RoomCardProps) {
                 <span>📋</span>
                 <span>Detail</span>
               </button>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+              <Link
+                href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+              >
                 <span>🛏️</span>
                 <span>Pesan Sekarang</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

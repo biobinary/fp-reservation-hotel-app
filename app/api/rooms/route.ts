@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { RowDataPacket } from 'mysql2';
-
-export interface KamarData extends RowDataPacket {
-  k_id_kamar: string;
-  k_id_hotel: string;
-  k_tipe_kamar: string;
-  k_harga_per_malam: number;
-  k_fasilitas: string;
-  k_jumlah_kamar: number;
-  k_deskripsi: string;
-  k_gambar_kamar: string;
-  popularityScore?: number;
-  totalReservations?: number;
-}
+import { KamarData } from '@/app/booking/page';
 
 export async function GET(request: NextRequest) {
+  
   try {
 
     const { searchParams } = new URL(request.url);
@@ -23,11 +11,6 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'price_asc';
     const minPrice = parseInt(searchParams.get('minPrice') || '0');
     const maxPrice = parseInt(searchParams.get('maxPrice') || '2000000');
-    const checkIn = searchParams.get('checkIn') || '';
-    const checkOut = searchParams.get('checkOut') || '';
-    const guests = parseInt(searchParams.get('guests') || '1');
-    const rooms = parseInt(searchParams.get('rooms') || '1');
-
     
     let query = `
       SELECT 
