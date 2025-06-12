@@ -1,28 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Proyek Next.js
 
-## Getting Started
+Proyek ini dibuat menggunakan [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-First, run the development server:
+## Memulai Proyek
+
+Untuk menjalankan server pengembangan, jalankan perintah berikut:
 
 ```bash
 npm run dev
-# or
+# atau
 yarn dev
-# or
+# atau
 pnpm dev
-# or
+# atau
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di peramban Anda untuk melihat hasilnya.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Anda dapat mulai mengedit halaman dengan memodifikasi file `app/page.tsx`. Halaman akan diperbarui secara otomatis ketika Anda menyimpan perubahan.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Proyek ini menggunakan [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) untuk mengoptimalkan dan memuat font [Geist](https://vercel.com/font), keluarga font baru dari Vercel.
 
-## Environment Variables
+## Variabel Lingkungan
 
-Untuk menjalankan proyek ini, Anda perlu membuat file `.env` di root direktori proyek. File ini digunakan untuk menyimpan kredensial database Anda secara aman.
+Untuk menjalankan proyek ini, Anda perlu membuat file `.env` di direktori root proyek. File ini digunakan untuk menyimpan kredensial database Anda secara aman.
 
 ### Contoh isi file `.env`
 
@@ -33,26 +35,20 @@ MYSQL_PASSWORD=yourpassword
 MYSQL_DATABASE=reservasi_hotel
 ```
 
-Gantilah nilai sesuai dengan konfigurasi database MySQL Anda.
+Silakan ganti nilainya sesuai dengan konfigurasi database MySQL Anda.
 
-### Cara membuat dan mengisi file `.env`
+### Cara Membuat dan Mengisi File `.env`
 
 1. Di root proyek, buat file baru bernama `.env`.
 2. Salin dan tempel konfigurasi di atas ke dalam file tersebut.
-3. Sesuaikan nilai `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, dan `MYSQL_DATABASE` sesuai dengan server database Anda.
-4. Pastikan Anda memiliki database dengan nama yang sesuai (`reservasi_hotel` secara default) di MySQL Anda.
+3. Sesuaikan nilai `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, dan `MYSQL_DATABASE` sesuai dengan pengaturan server database Anda.
+4. Pastikan Anda sudah memiliki database dengan nama yang sesuai (`reservasi_hotel` secara default) di MySQL Anda.
 
-## Learn More
+## Pelajari Lebih Lanjut
 
-To learn more about Next.js, take a look at the following resources:
+Untuk mempelajari lebih lanjut tentang Next.js, lihat sumber-sumber berikut:
 
-* [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-* [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* [Dokumentasi Next.js](https://nextjs.org/docs) – pelajari fitur dan API dari Next.js.
+* [Tutorial Interaktif Next.js](https://nextjs.org/learn) – belajar Next.js secara langsung dan interaktif.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Anda juga dapat mengunjungi [repositori GitHub Next.js](https://github.com/vercel/next.js) – masukan dan kontribusi Anda sangat dihargai!
