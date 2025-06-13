@@ -19,8 +19,6 @@ export default function Navbar() {
   const navLinks = [
     { href: '/rooms', label: 'Kamar' },
     { href: '/facilities', label: 'Fasilitas' },
-    { href: '/dining', label: 'Restoran' },
-    { href: '/events', label: 'Event' },
     { href: '/contact', label: 'Kontak' }
   ];
 
