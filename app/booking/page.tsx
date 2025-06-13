@@ -1,5 +1,7 @@
 'use client';
 
+
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -33,6 +35,7 @@ interface FilterState {
   checkOut: string;
   guests: number;
   rooms: number;
+  hotel?: string;
 }
 
 
@@ -66,8 +69,10 @@ export default function RoomsPage() {
       checkIn: filters.checkIn,
       checkOut: filters.checkOut,
       guests: filters.guests.toString(),
-      rooms: filters.rooms.toString()
+      rooms: filters.rooms.toString(),
+      hotel: filters.hotel || ''
     });
+
 
 
       const response = await fetch(`/api/rooms?${searchParams}`);
@@ -112,6 +117,20 @@ export default function RoomsPage() {
 
   const [showSearchForm, setShowSearchForm] = useState(false);
 
+const router = useRouter();
+
+const handleRedirectToRooms = () => {
+  const params = new URLSearchParams({
+    checkIn: filters.checkIn,
+    checkOut: filters.checkOut,
+    guests: filters.guests.toString(),
+    rooms: filters.rooms.toString(),
+    hotel: filters.hotel || '',
+  });
+
+  router.push(`/rooms?${params.toString()}`);
+};
+
   
   // Reset filters
   const resetFilters = () => {
@@ -128,8 +147,6 @@ export default function RoomsPage() {
   });
   };
   
-
-
   return (
     <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
       <Navbar />
@@ -168,6 +185,33 @@ export default function RoomsPage() {
               
               {/* Search Details */}
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
+
+              {/* Hotel Filter */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hotel & Lokasi
+                </label>
+                <div className="relative">
+                  <select
+                    value={filters.hotel}
+                    onChange={(e) => handleFilterChange('hotel', e.target.value)}
+                    className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-full"
+                  >
+                    <option value="">Semua Cabang</option>
+                    <option value="Grand Inna Jakarta">Grand Inna Jakarta</option>
+                    <option value="Grand Inna Surabaya">Grand Inna Surabaya</option>
+                    <option value="Grand Inna Bali">Grand Inna Bali</option>
+                    <option value="Grand Inna Yogyakarta">Grand Inna Yogyakarta</option>
+                    <option value="Grand Inna Bandung">Grand Inna Bandung</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
 
                 {/* Check-in */}
                 <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-3 rounded-2xl border border-blue-200 dark:border-blue-700">
@@ -227,75 +271,14 @@ export default function RoomsPage() {
 
               {/* Change Search Button */}
               <button
-                onClick={() => setShowSearchForm(prev => !prev)}
+                onClick={handleRedirectToRooms}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
               >
                 <span>🔄</span>
-                <span>Ubah Pencarian</span>
+                <span>Cari</span>
               </button>
             </div>
-            {showSearchForm && (
-            <div className="mt-6 bg-gray-900/60 backdrop-blur-md dark:bg-gray-800/80 p-6 rounded-2xl shadow-xl mx-auto max-w-6xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                {/* Check-in */}
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">📅 Check-in</label>
-                  <input
-                    type="date"
-                    value={filters.checkIn}
-                    onChange={(e) => handleFilterChange('checkIn', e.target.value)}
-                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Check-out */}
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">📅 Check-out</label>
-                  <input
-                    type="date"
-                    value={filters.checkOut}
-                    onChange={(e) => handleFilterChange('checkOut', e.target.value)}
-                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-
-                {/* Tamu */}
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">👥 Tamu</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={filters.guests}
-                    onChange={(e) => handleFilterChange('guests', parseInt(e.target.value))}
-                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                {/* Kamar */}
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">🛏️ Kamar</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={filters.rooms}
-                    onChange={(e) => handleFilterChange('rooms', parseInt(e.target.value))}
-                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Tombol Terapkan */}
-              <div className="text-right mt-6">
-                <button
-                  onClick={() => setShowSearchForm(false)}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold px-6 py-2 rounded-xl shadow hover:scale-105 transition"
-                >
-                  ✅ Terapkan
-                </button>
-              </div>
-            </div>
-          )}
+            
           </div>
         </div>
       </div>
@@ -417,7 +400,6 @@ export default function RoomsPage() {
                         onClick={() => handleFilterChange('tipeKamar', '')}
                         className="ml-2 text-blue-600 hover:text-blue-800"
                       >
-                        ×
                       </button>
                     </span>
                   )}
@@ -429,7 +411,6 @@ export default function RoomsPage() {
                         onClick={() => handlePriceRangeChange(200000, 2000000)}
                         className="ml-2 text-green-600 hover:text-green-800"
                       >
-                        ×
                       </button>
                     </span>
                   )}

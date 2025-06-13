@@ -35,7 +35,7 @@ export default function Navbar() {
             </div>
             <div className="flex items-center gap-2">
               <Mail size={14} />
-              <span>info@hotelmbd.com</span>
+              <span>info@grandinna.com</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin size={14} />
@@ -61,7 +61,7 @@ export default function Navbar() {
                 </Link>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Hotel MBD
+                  Grand Inna
                 </h1>
                 <p className="text-xs text-gray-500">Luxury & Comfort</p>
               </div>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hotel MBD - Reservasi Kamar Online",
-  description: "Pesan kamar hotel impian Anda dengan mudah dan cepat di Hotel MBD.",
+  title: "Grand Inna - Reservasi Kamar Online",
+  description: "Pesan kamar hotel impian Anda dengan mudah dan cepat di Grand Inna.",
 };
 
 export default function RootLayout({

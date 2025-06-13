@@ -21,7 +21,7 @@ export default function Footer() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Hotel MBD
+                    Grand Inna
                   </h3>
                   <p className="text-sm text-gray-400">Luxury & Comfort</p>
                 </div>
@@ -107,7 +107,7 @@ export default function Footer() {
                   </div>
                   <div>
                     <p className="text-white font-medium">Email</p>
-                    <p className="text-gray-300 text-sm">info@hotelmbd.com<br />booking@hotelmbd.com</p>
+                    <p className="text-gray-300 text-sm">info@grandinna.com<br />booking@grandinna.com</p>
                   </div>
                 </div>
 
@@ -148,7 +148,7 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <p className="text-gray-400 text-sm">
-                © {currentYear} Hotel MBD. All rights reserved.
+                © {currentYear} Grand Inna. All rights reserved.
               </p>
               <p className="text-gray-500 text-xs mt-1">
                 Designed with ❤️ in Indonesia
