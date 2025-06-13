@@ -106,9 +106,6 @@ export default function Hero() {
               <span className="relative z-10">Pesan Sekarang</span>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity"></div>
             </Link>
-            <button className="bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white font-semibold px-10 py-4 rounded-full transition-all duration-300 text-lg hover:scale-105">
-              Virtual Tour
-            </button>
           </div>
         </div>
       </div>
