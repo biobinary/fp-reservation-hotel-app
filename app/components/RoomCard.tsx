@@ -19,12 +19,11 @@ interface RoomCardProps {
 export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut, guests }: RoomCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   
-  // Parse facilities
   const facilities = kamar.k_fasilitas ? kamar.k_fasilitas.split(',').map(f => f.trim()) : [];
   const images = kamar.images || [];
   
-  // Format price
   const formattedPrice = kamar.formattedPrice || 
     new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -32,7 +31,12 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
       minimumFractionDigits: 0
     }).format(kamar.k_harga_per_malam);
 
-  // Get popularity badge
+  const description = kamar.k_deskripsi || '';
+  const isLongDescription = description.length > 150;
+  const displayDescription = showFullDescription || !isLongDescription 
+    ? description 
+    : description.substring(0, 150) + '...';
+
   const getPopularityBadge = () => {
     const reservations = kamar.confirmedReservations || 0;
     if (reservations > 10) return { text: 'Sangat Populer', color: 'bg-red-500', icon: '🔥' };
@@ -43,7 +47,6 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
 
   const popularityBadge = getPopularityBadge();
 
-  // Handle image navigation
   const nextImage = () => {
     if (images.length > 1) {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -56,7 +59,6 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
     }
   };
 
-  // Grid view (compact card)
   if (viewMode === 'grid') {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group">
@@ -143,17 +145,14 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
             </div>
           </div>
 
-          {kamar.hotel_nama && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center">
-              <span className="mr-1">🏨</span>
-              {kamar.hotel_nama}
-            </p>
+          {description && (
+            <div className="mb-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2">
+                {description}
+              </p>
+            </div>
           )}
-
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-            {kamar.k_deskripsi}
-          </p>
-
+          
           {/* Facilities */}
           <div className="flex flex-wrap gap-1 mb-4">
             {facilities.slice(0, 3).map((facility, index) => (
@@ -180,7 +179,6 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
     );
   }
 
-  // List view (full width card)
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group">
       <div className="flex flex-col lg:flex-row">
@@ -258,23 +256,38 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
         <div className="flex-1 p-6 lg:p-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4">
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 {kamar.k_tipe_kamar}
               </h3>
               
-              {kamar.hotel_nama && (
-                <p className="text-gray-600 dark:text-gray-400 mb-2 flex items-center">
-                  <span className="mr-2">🏨</span>
-                  <span className="font-medium">{kamar.hotel_nama}</span>
-                </p>
+              {description && (
+                <div className="mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border-l-4 border-blue-500">
+                    <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${
+                      isLongDescription && !showFullDescription ? 'line-clamp-3' : ''
+                    }`}>
+                      {displayDescription}
+                    </p>
+                    {isLongDescription && (
+                      <button
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm transition-colors duration-200 flex items-center space-x-1"
+                      >
+                        <span>{showFullDescription ? 'Lihat lebih sedikit' : 'Lihat selengkapnya'}</span>
+                        <svg 
+                          className={`w-4 h-4 transition-transform duration-200 ${showFullDescription ? 'rotate-180' : ''}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
               )}
 
-              {kamar.hotel_alamat && (
-                <p className="text-gray-600 dark:text-gray-400 mb-4 flex items-center">
-                  <span className="mr-2">📍</span>
-                  <span>{kamar.hotel_alamat}</span>
-                </p>
-              )}
             </div>
             
             <div className="text-right lg:ml-6">
@@ -287,10 +300,6 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
               </p>
             </div>
           </div>
-
-          <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-            {kamar.k_deskripsi}
-          </p>
 
           {/* Facilities */}
           <div className="mb-6">
