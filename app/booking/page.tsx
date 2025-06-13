@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
@@ -38,13 +37,12 @@ interface FilterState {
   hotel?: string;
 }
 
-
 export default function RoomsPage() {
+  const router = useRouter();
+
   const [roomsData, setRoomsData] = useState<KamarData[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  
-  
   const [filters, setFilters] = useState<FilterState>({
     tipeKamar: '',
     sortBy: 'price_asc',
@@ -54,99 +52,87 @@ export default function RoomsPage() {
     checkIn: '2025-05-31',
     checkOut: '2025-06-01',
     guests: 2,
-    rooms: 1
+    rooms: 1,
+    hotel: ''
   });
 
-  // Fetch rooms data with filters
-  const fetchRooms = async () => {
-    setLoading(true);
-    try {
-      const searchParams = new URLSearchParams({
-      tipeKamar: filters.tipeKamar,
-      sortBy: filters.sortBy,
-      minPrice: filters.priceRange[0].toString(),
-      maxPrice: filters.priceRange[1].toString(),
+  useEffect(() => {
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        const searchParams = new URLSearchParams({
+          tipeKamar: filters.tipeKamar,
+          sortBy: filters.sortBy,
+          minPrice: filters.priceRange[0].toString(),
+          maxPrice: filters.priceRange[1].toString(),
+          checkIn: filters.checkIn,
+          checkOut: filters.checkOut,
+          guests: filters.guests.toString(),
+          rooms: filters.rooms.toString(),
+          hotel: filters.hotel || ''
+        });
+
+        const response = await fetch(`/api/rooms?${searchParams.toString()}`);
+        const data = await response.json();
+        if (data.success) {
+          setRoomsData(data.rooms);
+        } else {
+          setRoomsData([]);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setRoomsData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [filters]);
+
+  const roomTypes = useMemo(() => {
+    return [...new Set(roomsData.map(r => r.k_tipe_kamar))].sort();
+  }, [roomsData]);
+
+  const handleFilterChange = (key: keyof FilterState, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handlePriceRangeChange = (min: number, max: number) => {
+    setFilters(prev => ({ ...prev, priceRange: [min, max] }));
+  };
+
+  const handleRedirectToRooms = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const params = new URLSearchParams({
       checkIn: filters.checkIn,
       checkOut: filters.checkOut,
       guests: filters.guests.toString(),
       rooms: filters.rooms.toString(),
-      hotel: filters.hotel || ''
+      hotel: filters.hotel || '',
+      tipeKamar: filters.tipeKamar,
+      sortBy: filters.sortBy,
+      minPrice: filters.priceRange[0].toString(),
+      maxPrice: filters.priceRange[1].toString()
     });
-
-
-
-      const response = await fetch(`/api/rooms?${searchParams}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setRoomsData(data.rooms);
-      }
-    } catch (error) {
-      console.error('Failed to fetch rooms:', error);
-      setRoomsData([]);
-    } finally {
-      setLoading(false);
-    }
+    router.push(`/rooms?${params.toString()}`);
   };
 
-  useEffect(() => {
-    fetchRooms();
-  }, [filters]);
-
-  // Get unique room types for filter dropdown
-  const roomTypes = useMemo(() => {
-    const types = [...new Set(roomsData.map(room => room.k_tipe_kamar))];
-    return types.sort();
-  }, [roomsData]);
-
-  // Handle filter changes
-  const handleFilterChange = (key: keyof FilterState, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  // Handle price range change
-  const handlePriceRangeChange = (min: number, max: number) => {
-    setFilters(prev => ({
-      ...prev,
-      priceRange: [min, max]
-    }));
-  };
-
-  const [showSearchForm, setShowSearchForm] = useState(false);
-
-const router = useRouter();
-
-const handleRedirectToRooms = () => {
-  const params = new URLSearchParams({
-    checkIn: filters.checkIn,
-    checkOut: filters.checkOut,
-    guests: filters.guests.toString(),
-    rooms: filters.rooms.toString(),
-    hotel: filters.hotel || '',
-  });
-
-  router.push(`/rooms?${params.toString()}`);
-};
-
-  
-  // Reset filters
   const resetFilters = () => {
     setFilters({
-    tipeKamar: '',
-    sortBy: 'price_asc',
-    minPrice: 0,
-    maxPrice: 2000000,
-    priceRange: [200000, 2000000],
-    checkIn: '2025-05-31',
-    checkOut: '2025-06-01',
-    guests: 2,
-    rooms: 1
-  });
+      tipeKamar: '',
+      sortBy: 'price_asc',
+      minPrice: 0,
+      maxPrice: 2000000,
+      priceRange: [200000, 2000000],
+      checkIn: '2025-05-31',
+      checkOut: '2025-06-01',
+      guests: 2,
+      rooms: 1,
+      hotel: ''
+    });
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
       <Navbar />
@@ -268,15 +254,6 @@ const handleRedirectToRooms = () => {
                 </div>
 
               </div>
-
-              {/* Change Search Button */}
-              <button
-                onClick={handleRedirectToRooms}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-              >
-                <span>🔄</span>
-                <span>Cari</span>
-              </button>
             </div>
             
           </div>
