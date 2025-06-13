@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
 
     const queryParams: any[] = [];
 
+    // Filter nama hotel tepat (bukan LIKE)
+    if (hotel) {
+      query += ' AND h.h_nama = ?';
+      queryParams.push(hotel);
+    }
+
     if (tipeKamar) {
       query += ' AND k.k_tipe_kamar = ?';
       queryParams.push(tipeKamar);
@@ -48,27 +54,22 @@ export async function GET(request: NextRequest) {
       queryParams.push(maxPrice);
     }
 
-    if (hotel) {
-      query += ' AND h.h_nama LIKE ?';
-      queryParams.push(`%${hotel}%`);
-    }
-
+    // Cek konflik reservasi
     if (checkIn && checkOut) {
       query += `
         AND k.k_id_kamar NOT IN (
           SELECT r_k_id_kamar
           FROM reservasi
           WHERE r_status IN ('Confirmed', 'Pending')
-            AND (
-              (r_tanggal_check_in < ? AND r_tanggal_check_out > ?)
-              OR (r_tanggal_check_in >= ? AND r_tanggal_check_in < ?)
+            AND NOT (
+              r_tanggal_check_out <= ? OR r_tanggal_check_in >= ?
             )
         )
       `;
-      queryParams.push(checkOut, checkIn, checkIn, checkOut);
+      queryParams.push(checkIn, checkOut);
     }
 
-    if (rooms && !isNaN(rooms)) {
+    if (!isNaN(rooms)) {
       query += ' AND k.k_jumlah_kamar >= ?';
       queryParams.push(rooms);
     }
