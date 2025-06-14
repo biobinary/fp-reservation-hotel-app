@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { User, Mail, Phone, MessageSquare, CreditCard } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface BookingFormProps {
   roomId: string;
@@ -11,46 +12,54 @@ interface BookingFormProps {
 
 export default function BookingForm({ roomId, checkIn, checkOut }: BookingFormProps) {
   const [formData, setFormData] = useState({
+    nik: '',
     fullName: '',
     email: '',
     phone: '',
-    specialRequests: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage('');
 
-    console.log('Data yang dikirim:', {
-      ...formData,
-      roomId,
-      checkIn,
-      checkOut
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    setSubmitMessage('Reservasi Anda berhasil! Silakan cek email Anda untuk konfirmasi.');
-    
+    try {
+      const response = await fetch('/api/pelanggan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nik: formData.nik,
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Gagal menyimpan data pelanggan');
+      }
+
+      // ✅ Redirect ke halaman pembayaran
+      router.push(`/pembayaran?nik=${formData.nik}&roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
+    } catch (error: any) {
+      setSubmitMessage(`❌ Gagal: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (submitMessage) {
-    return (
-      <div className="bg-green-100 dark:bg-green-900/30 border-l-4 border-green-500 text-green-700 dark:text-green-300 p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold mb-2">Terima Kasih!</h3>
-        <p>{submitMessage}</p>
-      </div>
-    )
-  }
 
   return (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
@@ -58,6 +67,25 @@ export default function BookingForm({ roomId, checkIn, checkOut }: BookingFormPr
       <p className="text-gray-600 dark:text-gray-400 mb-8">Hanya satu langkah lagi untuk menyelesaikan pemesanan Anda.</p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* NIK */}
+        <div>
+          <label htmlFor="nik" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">NIK</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input 
+              type="text" 
+              id="nik" 
+              name="nik"
+              value={formData.nik}
+              onChange={handleChange}
+              required 
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" 
+              placeholder="16 digit NIK"
+              maxLength={16}
+            />
+          </div>
+        </div>
+
         {/* Full Name */}
         <div>
           <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nama Lengkap</label>
@@ -109,23 +137,6 @@ export default function BookingForm({ roomId, checkIn, checkOut }: BookingFormPr
               className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" 
               placeholder="08123456789"
             />
-          </div>
-        </div>
-        
-        {/* Special Requests */}
-        <div>
-          <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permintaan Khusus (Opsional)</label>
-          <div className="relative">
-            <MessageSquare className="absolute left-3 top-4 text-gray-400" size={20} />
-            <textarea 
-              id="specialRequests" 
-              name="specialRequests"
-              value={formData.specialRequests}
-              onChange={handleChange}
-              rows={3}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" 
-              placeholder="Contoh: kamar bebas asap rokok, check-in lebih awal"
-            ></textarea>
           </div>
         </div>
 
