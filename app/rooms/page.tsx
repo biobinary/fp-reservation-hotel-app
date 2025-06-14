@@ -36,12 +36,6 @@ export default function KamarPage() {
                 <li>📺 TV</li>
                 <li>📶 WiFi</li>
               </ul>
-<<<<<<< HEAD
-=======
-              <button className="mt-2 inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-semibold transition-transform transform hover:scale-105">
-                Pesan Sekarang
-              </button>
->>>>>>> f93859f9f15c87ecb8c7f346d6f917242e61b63f
             </div>
           </div>
 
@@ -65,12 +59,6 @@ export default function KamarPage() {
                 <li>🛁 Kamar Mandi Pribadi</li>
                 <li>📺 Smart TV</li>
               </ul>
-<<<<<<< HEAD
-=======
-              <button className="mt-2 inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-semibold transition-transform transform hover:scale-105">
-                Pesan Sekarang
-              </button>
->>>>>>> f93859f9f15c87ecb8c7f346d6f917242e61b63f
             </div>
           </div>
 
@@ -94,12 +82,6 @@ export default function KamarPage() {
                 <li>🛁 Bathtub & Shower</li>
                 <li>☕ Mini Bar & Coffee Maker</li>
               </ul>
-<<<<<<< HEAD
-=======
-              <button className="mt-2 inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-semibold transition-transform transform hover:scale-105">
-                Pesan Sekarang
-              </button>
->>>>>>> f93859f9f15c87ecb8c7f346d6f917242e61b63f
             </div>
           </div>
 
