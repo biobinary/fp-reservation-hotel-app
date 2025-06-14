@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 const paymentMethods = [
@@ -9,7 +9,7 @@ const paymentMethods = [
   { value: 'Virtual Account', label: '🔢 Virtual Account' },
 ];
 
-export default function PaymentForm() {
+export default function PaymentForm({ hargaPerMalam }: { hargaPerMalam: number }) {
   const params = useSearchParams();
   const router = useRouter();
 
@@ -18,7 +18,6 @@ export default function PaymentForm() {
   const checkIn = params.get('checkIn')!;
   const checkOut = params.get('checkOut')!;
 
-  const [hargaPerMalam, setHargaPerMalam] = useState(0);
   const [metode, setMetode] = useState('Credit Card');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,19 +29,6 @@ export default function PaymentForm() {
   );
   const total = hargaPerMalam * jumlahMalam;
 
-  useEffect(() => {
-    const fetchHarga = async () => {
-      try {
-        const res = await fetch(`/api/harga-kamar?roomId=${roomId}`);
-        const data = await res.json();
-        setHargaPerMalam(data.harga || 0);
-      } catch (err) {
-        console.error('Gagal mengambil harga kamar:', err);
-      }
-    };
-    fetchHarga();
-  }, [roomId]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -52,7 +38,6 @@ export default function PaymentForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nik, roomId, checkIn, checkOut, metode, total }),
       });
-
       const data = await res.json();
       if (data.success) {
         alert('Pembayaran berhasil!');
