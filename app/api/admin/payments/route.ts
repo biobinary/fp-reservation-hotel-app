@@ -56,8 +56,10 @@ export async function GET(request: NextRequest) {
         `;
 
         const [payments] = await pool.query<PaymentDetails[]>(query);
+        const [totalResult] = await pool.query<any[]>("SELECT hitung_total_pendapatan() AS totalPendapatan;");
+        const totalIncome = totalResult[0].totalPendapatan;
 
-        return NextResponse.json({ success: true, payments });
+        return NextResponse.json({ success: true, payments, totalIncome });
 
     } catch (error) {
         console.error('Failed to fetch payments:', error);

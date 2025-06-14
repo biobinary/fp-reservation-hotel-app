@@ -107,6 +107,7 @@ export default function AdminDashboard() {
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [editingPayment, setEditingPayment] = useState<string | null>(null);
     const [updatingPayment, setUpdatingPayment] = useState<string | null>(null);
+    const [totalIncome, setTotalIncome] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
@@ -124,6 +125,7 @@ export default function AdminDashboard() {
 
             if (response.ok) {
                 setPayments(data.payments);
+                setTotalIncome(data.totalIncome);
             } else {
                 setError(data.error || 'Gagal memuat data.');
                 if (response.status === 401) {
@@ -193,9 +195,9 @@ export default function AdminDashboard() {
         const pending = payments.filter(p => p.pe_status_pembayaran === 'Pending').length;
         const failed = payments.filter(p => p.pe_status_pembayaran === 'Failed').length;
         const totalAmount = payments.reduce((sum, p) => sum + p.pe_jumlah, 0);
-        const paidAmount = payments.filter(p => p.pe_status_pembayaran === 'Paid').reduce((sum, p) => sum + p.pe_jumlah, 0);
 
-        return { total, paid, pending, failed, totalAmount, paidAmount };
+        return { total, paid, pending, failed, totalAmount };
+
     };
 
     const stats = getStats();
@@ -286,7 +288,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pendapatan</p>
-                                <p className="text-xl font-bold text-purple-600">{formatCurrency(stats.paidAmount)}</p>
+                                <p className="text-xl font-bold text-purple-600">{formatCurrency(totalIncome)}</p>
                             </div>
                             <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
                                 <TrendingUp className="text-white" size={24} />
