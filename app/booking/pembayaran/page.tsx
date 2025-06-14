@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -67,7 +67,7 @@ function PaymentPageContent() {
     <div className="container mx-auto px-4 py-12">
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
-          <PaymentForm />
+          <PaymentForm hargaPerMalam={room.k_harga_per_malam} />
         </div>
         <div className="lg:col-span-1">
           <ReservationSummary room={room} checkIn={checkIn} checkOut={checkOut} guests={guests} />
