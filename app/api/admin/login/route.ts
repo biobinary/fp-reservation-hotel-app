@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = adminRows[0];
-    
+
     if (password !== admin.a_password) {
       return NextResponse.json({ success: false, error: 'Email atau password salah' }, { status: 401 });
     }
@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
     );
 
     const serializedCookie = serialize('admin_session', token, {
-      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60,
