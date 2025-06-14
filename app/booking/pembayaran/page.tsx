@@ -1,30 +1,92 @@
-import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+'use client';
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const roomId = url.searchParams.get('roomId');
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Navbar from '@/app/components/Navbar';
+import Footer from '@/app/components/Footer';
+import PaymentForm from '@/app/components/PaymentForm';
+import ReservationSummary from '@/app/components/ReservationSummary';
+import { useEffect, useState } from 'react';
+import { KamarData } from '../page';
 
-  try {
-    const [rows]: any = await pool.query('SELECT k_harga_per_malam FROM kamar WHERE k_id_kamar = ?', [roomId]);
-    if (rows.length === 0) {
-      return NextResponse.json({ success: false }, { status: 404 });
-    }
-    return NextResponse.json({ success: true, harga: rows[0].k_harga_per_malam });
-  } catch (err) {
-    return NextResponse.json({ success: false }, { status: 500 });
-  }
-}
-export async function POST(request: NextRequest) {
-  try {
-    const { nik, metode, total } = await request.json();
-    await pool.query(
-      `INSERT INTO pembayaran (bayar_nik, bayar_metode, bayar_total) VALUES (?, ?, ?)`,
-      [nik, metode, total]
+function PaymentPageContent() {
+  const params = useSearchParams();
+  const roomId = params.get('roomId');
+  const checkIn = params.get('checkIn') || '';
+  const checkOut = params.get('checkOut') || '';
+  const guests = parseInt(params.get('guests') || '1');
+  const [room, setRoom] = useState<KamarData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRoomDetails = async () => {
+      if (!roomId) {
+        setError('ID kamar tidak ditemukan.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/rooms/${roomId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          setRoom(data.room);
+        } else {
+          setError(data.error || 'Gagal mengambil data kamar.');
+        }
+      } catch (err) {
+        setError('Gagal memuat data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoomDetails();
+  }, [roomId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-4 text-gray-300">Memuat halaman pembayaran...</span>
+      </div>
     );
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error pembayaran:', error);
-    return NextResponse.json({ success: false }, { status: 500 });
   }
+
+  if (error) {
+    return <div className="text-red-500 text-center py-10">{error}</div>;
+  }
+
+  if (!room) {
+    return <div className="text-center py-10">Data kamar tidak tersedia.</div>;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2">
+          <PaymentForm />
+        </div>
+        <div className="lg:col-span-1">
+          <ReservationSummary room={room} checkIn={checkIn} checkOut={checkOut} guests={guests} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)] bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <main className="flex-grow">
+        <Suspense fallback={<div className="text-center p-8">Loading...</div>}>
+          <PaymentPageContent />
+        </Suspense>
+      </main>
+      <Footer />
+    </div>
+  );
 }
