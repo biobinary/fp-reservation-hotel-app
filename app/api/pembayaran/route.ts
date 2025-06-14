@@ -6,25 +6,51 @@ export async function GET(request: NextRequest) {
   const roomId = url.searchParams.get('roomId');
 
   try {
-    const [rows]: any = await pool.query('SELECT k_harga_per_malam FROM kamar WHERE k_id_kamar = ?', [roomId]);
+    const [rows]: any = await pool.query(
+      'SELECT k_harga_per_malam FROM kamar WHERE k_id_kamar = ?',
+      [roomId]
+    );
+
     if (rows.length === 0) {
       return NextResponse.json({ success: false }, { status: 404 });
     }
+
     return NextResponse.json({ success: true, harga: rows[0].k_harga_per_malam });
   } catch (err) {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
-export async function POST(request: NextRequest) {
+
+function generateId(prefix: string): string {
+  return `${prefix}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`;
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { nik, metode, total } = await request.json();
+    const { nik, roomId, checkIn, checkOut, metode, total } = await req.json();
+
+    const idReservasi = generateId('RSV');
     await pool.query(
-      `INSERT INTO pembayaran (bayar_nik, bayar_metode, bayar_total) VALUES (?, ?, ?)`,
-      [nik, metode, total]
+      `INSERT INTO reservasi (r_id_reservasi, r_p_nik, r_k_id_kamar, r_tanggal_check_in, r_tanggal_check_out)
+       VALUES (?, ?, ?, ?, ?)`,
+      [idReservasi, nik, roomId, checkIn, checkOut]
     );
-    return NextResponse.json({ success: true });
+
+    const idPembayaran = generateId('PAY');
+    const tanggalPembayaran = new Date();
+    await pool.query(
+      `INSERT INTO pembayaran (pe_id_pembayaran, pe_r_id_reservasi, pe_metode_pembayaran, pe_status_pembayaran, pe_jumlah, pe_tanggal_pembayaran)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [idPembayaran, idReservasi, metode, 'Paid', total, tanggalPembayaran]
+    );
+
+    return NextResponse.json({ success: true, message: 'Pembayaran berhasil dilakukan!' });
   } catch (error) {
-    console.error('Error pembayaran:', error);
-    return NextResponse.json({ success: false }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ success: false, message: 'Gagal menyimpan pembayaran' }, { status: 500 });
   }
 }
+
+
+
+
