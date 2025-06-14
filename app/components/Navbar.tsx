@@ -19,7 +19,8 @@ export default function Navbar() {
   const navLinks = [
     { href: '/rooms', label: 'Kamar' },
     { href: '/facilities', label: 'Fasilitas' },
-    { href: '/contact', label: 'Kontak' }
+    { href: '/contact', label: 'Kontak' },
+    { href: '/reservations', label: 'Reservasi'}
   ];
 
   return (
