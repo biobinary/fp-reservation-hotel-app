@@ -5,9 +5,13 @@ import { jwtVerify } from 'jose';
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secret-key');
 
 export async function middleware(request: NextRequest) {
-
-    const { pathname } = request.nextUrl;
+    
+  const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('admin_session')?.value;
+
+  if (pathname === '/admin') {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  }
 
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
     if (!sessionCookie) {
@@ -22,7 +26,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Jika mencoba mengakses halaman login tapi sudah punya sesi
   if (pathname === '/admin/login' && sessionCookie) {
     try {
       await jwtVerify(sessionCookie, JWT_SECRET);
