@@ -26,14 +26,15 @@ function generateId(prefix: string): string {
 }
 
 export async function POST(req: NextRequest) {
+
   try {
     const { nik, roomId, checkIn, checkOut, metode, total } = await req.json();
 
     const idReservasi = generateId('RSV');
     await pool.query(
-      `INSERT INTO reservasi (r_id_reservasi, r_p_nik, r_k_id_kamar, r_tanggal_check_in, r_tanggal_check_out)
-       VALUES (?, ?, ?, ?, ?)`,
-      [idReservasi, nik, roomId, checkIn, checkOut]
+      `INSERT INTO reservasi (r_id_reservasi, r_p_nik, r_k_id_kamar, r_tanggal_check_in, r_tanggal_check_out, r_status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [idReservasi, nik, roomId, checkIn, checkOut, 'Pending']
     );
 
     const idPembayaran = generateId('PAY');
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     await pool.query(
       `INSERT INTO pembayaran (pe_id_pembayaran, pe_r_id_reservasi, pe_metode_pembayaran, pe_status_pembayaran, pe_jumlah, pe_tanggal_pembayaran)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [idPembayaran, idReservasi, metode, 'Paid', total, tanggalPembayaran]
+      [idPembayaran, idReservasi, metode, 'Pending', total, tanggalPembayaran]
     );
 
     return NextResponse.json({ success: true, message: 'Pembayaran berhasil dilakukan!' });

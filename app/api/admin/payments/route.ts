@@ -97,6 +97,15 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Pembayaran tidak ditemukan' }, { status: 404 });
         }
 
+        const reservationStatus = status == 'Paid' ? 'Confirmed' : (status == 'Failed' ? 'Cancelled' : 'Pending');
+        const updateQueryReservation = `
+            UPDATE reservasi r
+            JOIN pembayaran p ON r.r_id_reservasi = p.pe_r_id_reservasi
+            SET r.r_status = ?
+            WHERE p.pe_id_pembayaran = ?
+        `;
+
+        await pool.query(updateQueryReservation, [reservationStatus, paymentId]);
         return NextResponse.json({ success: true, message: 'Status pembayaran berhasil diperbarui' });
 
     } catch (error) {

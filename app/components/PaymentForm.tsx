@@ -30,27 +30,35 @@ export default function PaymentForm({ hargaPerMalam }: { hargaPerMalam: number }
   const total = hargaPerMalam * jumlahMalam;
 
   const handleSubmit = async (e: React.FormEvent) => {
+    
     e.preventDefault();
     setIsSubmitting(true);
+    
     try {
+      
       const res = await fetch('/api/pembayaran', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nik, roomId, checkIn, checkOut, metode, total }),
       });
+      
       const data = await res.json();
+      
       if (data.success) {
         alert('Pembayaran berhasil!');
-        router.push('/sukses');
+        router.push('/reservations');
       } else {
         alert('Pembayaran gagal!');
       }
+    
     } catch (error) {
       console.error('Error:', error);
       alert('Terjadi kesalahan');
+    
     } finally {
       setIsSubmitting(false);
     }
+
   };
 
   return (
