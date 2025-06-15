@@ -39,15 +39,18 @@ export default function Contact() {
     <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)]">
       <Navbar />
       <main className="flex-grow bg-gray-50">
-        <section className="relative w-full py-20 bg-gradient-to-b from-blue-600 to-purple-600">
-          <div className="absolute inset-0 bg-black/40"></div>
-          <div className="container mx-auto px-6 text-center relative z-10">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Hubungi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Kami</span>
-            </h1>
-            <p className="text-lg text-gray-200 max-w-2xl mx-auto">
-              Kami siap membantu Anda dengan segala pertanyaan atau kebutuhan reservasi. Silakan hubungi kami!
-            </p>
+
+        <section className="relative bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 py-20">
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center text-white">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                Hubungi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Kami</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto">
+                Kami siap membantu Anda dengan segala pertanyaan atau kebutuhan reservasi. Silakan hubungi kami!
+              </p>
+            </div>
           </div>
         </section>
 
