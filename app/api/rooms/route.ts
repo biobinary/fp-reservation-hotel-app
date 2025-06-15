@@ -23,7 +23,28 @@ export async function GET(request: NextRequest) {
         h.h_nama AS hotel_nama,
         h.h_alamat AS hotel_alamat,
         COALESCE(COUNT(r.r_id_reservasi), 0) AS totalReservations,
-        COALESCE(COUNT(CASE WHEN r.r_status = 'Confirmed' THEN 1 END), 0) AS confirmedReservations
+        COALESCE(COUNT(CASE WHEN r.r_status = 'Confirmed' THEN 1 END), 0) AS confirmedReservations,
+        ${checkIn && checkOut ? 
+          `CekKetersediaanKamar(k.k_id_kamar, '${checkIn}', '${checkOut}') AS availability_status,` : 
+          'k.k_jumlah_kamar AS availability_status,'
+        }
+        ${checkIn && checkOut ? 
+          `CASE 
+            WHEN CekKetersediaanKamar(k.k_id_kamar, '${checkIn}', '${checkOut}') = 1 THEN 
+              k.k_jumlah_kamar - COALESCE((
+                SELECT COUNT(*) 
+                FROM reservasi r2 
+                WHERE r2.r_k_id_kamar = k.k_id_kamar 
+                AND r2.r_status IN ('Confirmed', 'Pending')
+                AND (
+                  (r2.r_tanggal_check_in <= '${checkOut}' AND r2.r_tanggal_check_out > '${checkIn}')
+                  OR (r2.r_tanggal_check_in < '${checkOut}' AND r2.r_tanggal_check_out >= '${checkIn}')
+                )
+              ), 0)
+            ELSE 0 
+          END AS available_rooms` :
+          'k.k_jumlah_kamar AS available_rooms'
+        }
       FROM kamar k
       LEFT JOIN hotel h ON k.k_id_hotel = h.h_id_hotel
       LEFT JOIN reservasi r ON k.k_id_kamar = r.r_k_id_kamar
@@ -33,7 +54,6 @@ export async function GET(request: NextRequest) {
 
     const queryParams: any[] = [];
 
-    // Filter nama hotel tepat (bukan LIKE)
     if (hotel) {
       query += ' AND h.h_nama = ?';
       queryParams.push(hotel);
@@ -54,24 +74,29 @@ export async function GET(request: NextRequest) {
       queryParams.push(maxPrice);
     }
 
-    // Cek konflik reservasi
     if (checkIn && checkOut) {
-      query += `
-        AND k.k_id_kamar NOT IN (
-          SELECT r_k_id_kamar
-          FROM reservasi
-          WHERE r_status IN ('Confirmed', 'Pending')
-            AND NOT (
-              r_tanggal_check_out <= ? OR r_tanggal_check_in >= ?
-            )
-        )
-      `;
-      queryParams.push(checkIn, checkOut);
+      query += ` AND CekKetersediaanKamar(k.k_id_kamar, '${checkIn}', '${checkOut}') = 1`;
     }
 
-    if (!isNaN(rooms)) {
-      query += ' AND k.k_jumlah_kamar >= ?';
-      queryParams.push(rooms);
+    if (!isNaN(rooms) && rooms > 0) {
+      if (checkIn && checkOut) {
+        query += `
+          AND (k.k_jumlah_kamar - COALESCE((
+            SELECT COUNT(*) 
+            FROM reservasi r3 
+            WHERE r3.r_k_id_kamar = k.k_id_kamar 
+            AND r3.r_status IN ('Confirmed', 'Pending')
+            AND (
+              (r3.r_tanggal_check_in <= '${checkOut}' AND r3.r_tanggal_check_out > '${checkIn}')
+              OR (r3.r_tanggal_check_in < '${checkOut}' AND r3.r_tanggal_check_out >= '${checkIn}')
+            )
+          ), 0)) >= ?
+        `;
+        queryParams.push(rooms);
+      } else {
+        query += ' AND k.k_jumlah_kamar >= ?';
+        queryParams.push(rooms);
+      }
     }
 
     query += ' GROUP BY k.k_id_kamar, h.h_nama, h.h_alamat';
@@ -87,7 +112,7 @@ export async function GET(request: NextRequest) {
         query += ' ORDER BY confirmedReservations DESC, totalReservations DESC';
         break;
       case 'rooms_desc':
-        query += ' ORDER BY k.k_jumlah_kamar DESC';
+        query += ' ORDER BY available_rooms DESC';
         break;
       case 'type_asc':
         query += ' ORDER BY k.k_tipe_kamar ASC';
@@ -96,7 +121,10 @@ export async function GET(request: NextRequest) {
         query += ' ORDER BY k.k_harga_per_malam ASC';
     }
 
-    const [rows] = await pool.query<KamarData[]>(query, queryParams);
+    const [rows] = await pool.query<(KamarData & { 
+      availability_status: number; 
+      available_rooms: number; 
+    })[]>(query, queryParams);
 
     const processedRooms = rows.map((kamar) => {
       const popularityScore =
@@ -106,6 +134,8 @@ export async function GET(request: NextRequest) {
         ...kamar,
         images: JSON.parse(kamar.k_gambar_kamar || '[]'),
         popularityScore,
+        availableRooms: kamar.available_rooms,
+        availabilityStatus: kamar.availability_status,
         formattedPrice: new Intl.NumberFormat('id-ID', {
           style: 'currency',
           currency: 'IDR',
@@ -142,5 +172,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-  
 }

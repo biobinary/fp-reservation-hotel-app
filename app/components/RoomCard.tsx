@@ -9,6 +9,7 @@ interface RoomCardProps {
   kamar: KamarData & {
     availableRooms?: number;
     formattedPrice?: string;
+    availabilityStatus?: number;
   };
   viewMode?: 'list' | 'grid';
   checkIn: string;
@@ -37,6 +38,71 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
     ? description 
     : description.substring(0, 150) + '...';
 
+  const getAvailabilityInfo = () => {
+    const availableRooms = kamar.availableRooms || 0;
+    const availabilityStatus = kamar.availabilityStatus || 1;
+    
+    if (availabilityStatus === -1) {
+      return {
+        status: 'not_found',
+        message: 'Kamar tidak ditemukan',
+        color: 'bg-gray-500',
+        textColor: 'text-gray-700',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-300',
+        icon: '❌'
+      };
+    }
+    
+    if (availabilityStatus === 0 || availableRooms === 0) {
+      return {
+        status: 'unavailable',
+        message: 'Tidak tersedia',
+        color: 'bg-red-500',
+        textColor: 'text-red-700',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200',
+        icon: '🚫'
+      };
+    }
+    
+    if (availableRooms <= 2) {
+      return {
+        status: 'limited',
+        message: `Hanya ${availableRooms} kamar tersisa`,
+        color: 'bg-orange-500',
+        textColor: 'text-orange-700',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-200',
+        icon: '⚠️'
+      };
+    }
+    
+    if (availableRooms <= 5) {
+      return {
+        status: 'available',
+        message: `${availableRooms} kamar tersedia`,
+        color: 'bg-yellow-500',
+        textColor: 'text-yellow-700',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        icon: '✅'
+      };
+    }
+    
+    return {
+      status: 'plenty',
+      message: `${availableRooms} kamar tersedia`,
+      color: 'bg-green-500',
+      textColor: 'text-green-700',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      icon: '✅'
+    };
+  };
+
+  const availabilityInfo = getAvailabilityInfo();
+
   const getPopularityBadge = () => {
     const reservations = kamar.confirmedReservations || 0;
     if (reservations > 10) return { text: 'Sangat Populer', color: 'bg-red-500', icon: '🔥' };
@@ -58,6 +124,8 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
       setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     }
   };
+
+  const isBookingDisabled = availabilityInfo.status === 'unavailable' || availabilityInfo.status === 'not_found';
 
   if (viewMode === 'grid') {
     return (
@@ -102,13 +170,20 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
           
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
+            
+            <span className={`${availabilityInfo.color} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1`}>
+              <span>{availabilityInfo.icon}</span>
+              <span>{availabilityInfo.message}</span>
+            </span>
+            
             {popularityBadge && (
               <span className={`${popularityBadge.color} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1`}>
                 <span>{popularityBadge.icon}</span>
                 <span>{popularityBadge.text}</span>
               </span>
             )}
-            {kamar.k_jumlah_kamar <= 3 && (
+            
+            {kamar.k_jumlah_kamar <= 3 && availabilityInfo.status !== 'unavailable' && (
               <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
                 <span>⚠️</span>
                 <span>Terbatas</span>
@@ -145,6 +220,31 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
             </div>
           </div>
 
+          <div className={`mb-3 p-2 rounded-lg border ${availabilityInfo.bgColor} ${availabilityInfo.borderColor}`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${availabilityInfo.textColor} flex items-center space-x-1`}>
+                <span>{availabilityInfo.icon}</span>
+                <span>{availabilityInfo.message}</span>
+              </span>
+              {availabilityInfo.status === 'available' || availabilityInfo.status === 'plenty' ? (
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-green-600">Tersedia</span>
+                </div>
+              ) : availabilityInfo.status === 'limited' ? (
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-orange-600">Terbatas</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-xs text-red-600">Penuh</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {description && (
             <div className="mb-3">
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2">
@@ -168,12 +268,21 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
             )}
           </div>
 
-          <Link 
-            href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
-            className="block text-center w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-            Pesan Sekarang
-          </Link>
-
+          {isBookingDisabled ? (
+            <button 
+              disabled
+              className="block text-center w-full bg-gray-400 text-gray-600 py-2 px-4 rounded-xl font-semibold cursor-not-allowed"
+            >
+              Tidak Tersedia
+            </button>
+          ) : (
+            <Link 
+              href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
+              className="block text-center w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Pesan Sekarang
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -221,15 +330,21 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
             </div>
           )}
           
-          {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
+          
+            <span className={`${availabilityInfo.color} text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2`}>
+              <span>{availabilityInfo.icon}</span>
+              <span>{availabilityInfo.message}</span>
+            </span>
+            
             {popularityBadge && (
               <span className={`${popularityBadge.color} text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2`}>
                 <span>{popularityBadge.icon}</span>
                 <span>{popularityBadge.text}</span>
               </span>
             )}
-            {kamar.k_jumlah_kamar <= 3 && (
+            
+            {kamar.k_jumlah_kamar <= 3 && availabilityInfo.status !== 'unavailable' && (
               <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2">
                 <span>⚠️</span>
                 <span>Kamar Terbatas</span>
@@ -259,6 +374,41 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 {kamar.k_tipe_kamar}
               </h3>
+              
+              <div className={`mb-4 p-4 rounded-xl border-2 ${availabilityInfo.bgColor} ${availabilityInfo.borderColor}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{availabilityInfo.icon}</span>
+                    <div>
+                      <p className={`font-semibold ${availabilityInfo.textColor}`}>
+                        {availabilityInfo.message}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Untuk {checkIn} - {checkOut}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    {availabilityInfo.status === 'available' || availabilityInfo.status === 'plenty' ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium text-green-600">Siap Dipesan</span>
+                      </div>
+                    ) : availabilityInfo.status === 'limited' ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium text-orange-600">Segera Pesan</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-red-600">Tidak Tersedia</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
               
               {description && (
                 <div className="mb-6">
@@ -295,8 +445,12 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
                 {formattedPrice}
               </p>
               <p className="text-sm text-gray-500">per malam</p>
-              <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
-                {kamar.availableRooms || kamar.k_jumlah_kamar} kamar tersedia
+              <p className={`text-sm font-medium mt-1 ${
+                availabilityInfo.status === 'unavailable' ? 'text-red-600' :
+                availabilityInfo.status === 'limited' ? 'text-orange-600' :
+                'text-green-600 dark:text-green-400'
+              }`}>
+                {availabilityInfo.message}
               </p>
             </div>
           </div>
@@ -339,13 +493,24 @@ export default function RoomCard({ kamar, viewMode = 'list',  checkIn, checkOut,
                 <span>📋</span>
                 <span>Detail</span>
               </button>
-              <Link
-                href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
-              >
-                <span>🛏️</span>
-                <span>Pesan Sekarang</span>
-              </Link>
+              
+              {isBookingDisabled ? (
+                <button 
+                  disabled
+                  className="bg-gray-400 text-gray-600 px-8 py-3 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  <span>🚫</span>
+                  <span>Tidak Tersedia</span>
+                </button>
+              ) : (
+                <Link
+                  href={`/booking/confirm?roomId=${kamar.k_id_kamar}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                >
+                  <span>🛏️</span>
+                  <span>Pesan Sekarang</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
