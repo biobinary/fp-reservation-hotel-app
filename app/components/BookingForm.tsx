@@ -52,7 +52,7 @@ export default function BookingForm({ roomId, checkIn, checkOut }: BookingFormPr
       }
 
       // ✅ Redirect ke halaman pembayaran
-      router.push(`/pembayaran?nik=${formData.nik}&roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
+      router.push(`/booking/pembayaran?nik=${formData.nik}&roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
     } catch (error: any) {
       setSubmitMessage(`❌ Gagal: ${error.message}`);
     } finally {
